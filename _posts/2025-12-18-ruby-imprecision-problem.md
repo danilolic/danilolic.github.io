@@ -256,7 +256,7 @@ Uma pergunta importante que pode surgir: se eu chamo `coerce` para um número Fl
 Para responder essa pergunta eu tive que ir no código fonte do Ruby e a reposta é: toda vez que uma instância de BigDecimal é criada com um Float o ruby faz um `Float.to_s` e depois cria o BigDecimal.
 
 Caso tenha interesse eu deixei o link exatamente para o método que faz essa conversão:
-https://github.com/ruby/bigdecimal/blob/master/ext/bigdecimal/bigdecimal.c#L2688
+[https://github.com/ruby/bigdecimal/blob/master/ext/bigdecimal/bigdecimal.c#L2688](https://github.com/ruby/bigdecimal/blob/master/ext/bigdecimal/bigdecimal.c#L2688)
 
 Na prática tanto faz se o parâmetro é String ou Float:
 
