@@ -151,7 +151,7 @@ Efeito Cascata do Truncate: Ao usar `truncate(2)`, você está jogando fora os "
 Claro, **existem vários números que podem ser perfeitamente representados pelo tipo Float**.
 Entenda o ponto mais importante: _O problema dos floats não é que eles sempre erram, mas que você nunca sabe quando vão errar._
 
-Q: Então se o float carrega imprecisão e não podemos truncar, o que devemos fazer?
+Q: Então se o float carrega imprecisão e não podemos truncar, o que devemos fazer? \
 R: Não usar Float **para cálculos**. Você ainda pode usar Float para fazer representações de números decimais, mas evite fazer cálculos. Minha opinição sobre isso é que mesmo nesse caso ainda é possível evitar o uso de Float visto que valor monetário tem tipos melhores para representação. A string, como já comentado acima, funciona para representar valores decimais onde não existe necessidade de cálculo, mas um BigDecimal funciona perfeitamente nesse caso também.
 
 ## Tipo Inteiro
