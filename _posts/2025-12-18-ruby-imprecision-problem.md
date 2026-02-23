@@ -1,5 +1,5 @@
 ---
-title: Representação de dinheiro em Ruby
+title: Representação monetária em Ruby
 description: >-
   O Problema da imprecisão
 author: danilo
@@ -14,7 +14,7 @@ Ao lidar com valores monetários em sistemas de software, a forma como esses dad
 
 Existem diferentes abordagens para representar valores monetários, cada uma com vantagens e limitações. Os tipos básicos mais usados são String, Inteiro, Float e Decimal, então vamos falar brevemente sobre cada um desses tipos.
 
-# String
+## Tipo String
 
 O uso de strings, é comum em contextos de exibição e entrada de dados.
 
@@ -36,15 +36,15 @@ E a serialização da resposta HTTP pode conter um número representado como Str
 }
 ```
 
-porém **não é adequado para cálculos**. A representação de números em texto pode ser problemática em linguagens fracamente tipadas igual o (Javascript) onde você consegue fazer algo como (String + Number) sem gerar erros, mas em linguagens fortemente tipadas como o Ruby, você vai tomar um erro em tempo de execução. Uma única exceção é que Ruby aceita a multiplicação (String * Number), então é um ponto de atenção, mas acredito que com bons testes você não terá problemas. Em linguagens estaticamente tipadas esse erro seria pego em tempo de compilação.
+porém **não é adequado para cálculos**. A representação de números em texto pode ser problemática em linguagens fracamente tipadas igual o Javascript onde você consegue fazer algo como `String + Number` sem gerar nenhum aviso, mas gerando um erro lógico silencioso que pode causar problemas. Em linguagens fortemente tipadas como o Ruby, você vai tomar um erro em tempo de execução. Uma única exceção é que Ruby aceita a multiplicação `String * Number`, então é um ponto que merece atenção, mas acredito que com bons testes você não terá problemas, mas caso queira um pouco mais de segurança vale a pena usar a gem `Dry::Validation` para assegurar tipos. Em linguagens estaticamente tipadas esse erro seria pego em tempo de compilação, portanto seria possível identificar e corrigir o problema em uma etapa antes do código ir para produção, essa é grande vantagem dessas linguagens.
 
-# Float
+## Tipo Float
 
 O tipo Float é impreciso porque utiliza representação binária de ponto flutuante, o que impede que muitos números decimais comuns (como 0.1 ou 0.01) sejam representados exatamente. Esses valores são armazenados como aproximações, e pequenas diferenças se acumulam a cada operação matemática.
 
-Então pense em operações onde 0.1 é por exemplo 10% ou 0.01 é 1%. Esses valores são muito comuns em contexto financeiro, e eu poderia citar outros valores como taxa IOF, taxa DI, etc. Que por serem porcentagem vão estar definidos geralmente entre 0 e 1.
+Então pense em operações onde 0.1 é por exemplo 10% (10/100) ou 0.01 é 1% (1/100). Esses valores são muito comuns em contexto financeiro, e eu poderia citar outros vários valores como taxa IOF, taxa DI, etc. Que por serem porcentagem vão estar definidos geralmente entre 0 e 1.
 
-Temos situações que podem levar a bugs muito śerios, principalmente quando fazemos comparações.
+Nesse cenários temos situações que podem levar a bugs muito sérios, principalmente quando fazemos comparações.
 Então imagine que você queira fazer uma soma de todas as taxas de um determinado cliente para classificá-lo em uma categoria:
 
 ###### Float - exemplo 1
@@ -65,7 +65,7 @@ end
 => "Category B" # Categoria incorreta
 ```
 
-Existem vários outros exemplos e alguns podem facilmente te enganar, então vamos explorar um caso que a princípio parece inofensivo. Se eu digito 0.1 no IRB e dou um enter ele me retorna 0.1
+Existem vários outros exemplos e alguns podem facilmente te enganar, então vamos explorar um caso que a princípio parece inofensivo: se eu digito 0.1 no IRB e dou um ENTER ele me retorna 0.1
 
 ###### Float - exemplo 2
 ```ruby
@@ -75,7 +75,7 @@ irb(main):085:0> 0.1.class
 => Float
 ```
 
-Parece normal, certo? Por que então tivemos um erro de imprecisão no exemplo anterior (Float - exemplo 2)? Vamos explorar esse valor várias casas após a vírgula, por exemplo:
+Parece normal, certo? Por que então tivemos um erro de imprecisão no exemplo __Float - exemplo 1__ ? Vamos explorar esse valor várias casas após a vírgula dessa forma:
 
 ###### Float - exemplo 3
 ```ruby
@@ -83,7 +83,7 @@ irb(main):086:0> printf("%.30f", 0.1)
 0.100000000000000005551115123126
 ```
 
-Agora podemos ver a imprecisão! Bom, você pode argumentar que existem poucos cenários onde eu precisaria de uma precisão de 30 casas decimais. Na prática, se você não se importa com tantas casas decimais assim, significa que você está dando atenção só para as primeiras casas decimais, afinal, não existe um valor monetário como 0.100000000000000005551115123126, seria somente R$ 0.10 ou 10 centavos. Portanto o valor que o usuário verá em tela foi truncado, mas a imprecisão não alterou o resultado final.
+Agora podemos ver a imprecisão! Bom, você pode argumentar que existem poucos cenários onde eu precisaria de uma precisão de 30 casas decimais (e você estaria certo). Na prática, se você não se importa com tantas casas decimais assim, significa que você está dando atenção só para as primeiras casas decimais, afinal, não existe um valor monetário como __0.100000000000000005551115123126__ , seria somente R$ 0.10 ou 10 centavos. Portanto o valor que o usuário verá em tela foi truncado, mas para esse caso felizmente a imprecisão não alterou o resultado final.
 
 Existem ainda casos onde a imprecisão é ainda mais evidente:
 
@@ -111,15 +111,15 @@ Failure/Error: expect(calculation).to eq(110.98)
             got: 110.97999999999999
 ```
 
-## O problema da truncagem:
-Dado o exemplo do valor 0.1 (Float - exemplo 3), nós não chamamos o método `truncate`, mas de forma consciente ou não, estamos truncando os valores para duas casas decimais. Isso é um fato porque o usuário não vai ver em tela 0.100000000000000005551115123126, então ainda que não tenha sido de forma direta, houve um truncate, mas nesse caso sem introdução de imprecisão.
+### O problema da truncagem
+Dado o exemplo do valor 0.1 (Float - exemplo 3), nós não chamamos o método `truncate` e ainda sim eu argumentei que o valor foi truncado, bom, de forma consciente ou não, estamos truncando os valores para duas casas decimais. Isso é um fato porque o usuário não vai ver em tela __0.100000000000000005551115123126__, então ainda que não tenha sido de forma direta, houve uma truncagem, mas nesse caso sem introdução de imprecisão.
 
 O grande problema é que a truncagem pode levar a um valor final completamente diferente do valor matematicamente correto. Vou dar um exemplo explorando o pior cenário possível deste caso, aquele que todo programador vai falar "ah! mas eu nunca faria assim" ou "ninguém cometeria um erro tão bobo assim". Bom, essa é uma discussão inútil, o ponto é que se existe a possibilidade de acontecer, vai acontecer.
 
-Cenário (realista)
-Valor base: R$ 123,45
-IOF diário: 0,0082% → 0.000082
-Período: 30 dias
+Cenário (realista) \
+Valor base: R$ 123,45 \
+IOF diário: 0,0082% → 0.000082 \
+Período: 30 dias \
 Regra: valores monetários com 2 casas decimais
 
 ###### Float - exemplo 6
@@ -149,12 +149,12 @@ end
 Efeito Cascata do Truncate: Ao usar `truncate(2)`, você está jogando fora os "micro-centavos". Em um cálculo de 30 dias, isso parece pouco. Mas imagine um banco com 1 milhão de contas e cálculos feitos diariamente por anos, a diferença de centavos se transforma em **milhares de reais de erro contábil**.
 
 Claro, **existem vários números que podem ser perfeitamente representados pelo tipo Float**.
-_O problema dos floats não é que eles sempre erram, mas que você nunca sabe quando vão errar._
+Entenda o ponto mais importante: _O problema dos floats não é que eles sempre erram, mas que você nunca sabe quando vão errar._
 
 Q: Então se o float carrega imprecisão e não podemos truncar, o que devemos fazer?
-R: Não usar Float **para cálculos**. Você ainda pode usar Float para fazer representações de números decimais, mas evite fazer cálculos.
+R: Não usar Float **para cálculos**. Você ainda pode usar Float para fazer representações de números decimais, mas evite fazer cálculos. Minha opinição sobre isso é que mesmo nesse caso ainda é possível evitar o uso de Float visto que valor monetário tem tipos melhores para representação. A string, como já comentado acima, funciona para representar valores decimais onde não existe necessidade de cálculo, mas um BigDecimal funciona perfeitamente nesse caso também.
 
-# Inteiro
+## Tipo Inteiro
 Qualquer valor monetário pode ser armazenado como inteiro:
 
 ```
@@ -168,11 +168,11 @@ R$ 100.99 = 10099
 Para mim é a forma mais segura e flexível de armazenar valores monetários além de resolver o problema de imprecisão, existem duas grandes vantagens:
 
 1. Performance: Cálculos matemáticos com inteiros (CPU) são muito mais rápidos do que com decimais (processados via software).
-2. Espaço: Um DECIMAL(15,5) pode ocupar 18 bytes, enquanto o BIGINT ocupa sempre 8 bytes, economizando mais de 50% de espaço em disco e memória em grandes volumes de dados.
+2. Espaço: Um `DECIMAL(15,5)` pode ocupar 18 bytes, enquanto o `BIGINT` ocupa sempre 8 bytes, economizando mais de 50% de espaço em disco e memória em grandes volumes de dados.
 
-# Decimal
+## Tipo Decimal
 
-O Ruby fornece suporte a tipos decimais através da classe "BigDecimal"
+O Ruby fornece suporte a tipos decimais através da classe `BigDecimal`
 
 ```ruby
 require 'bigdecimal'
@@ -224,7 +224,7 @@ Detalhe da sintaxe:
 x + y
 ```
 
-é o mesmo que
+em Ruby é o mesmo que
 
 ```ruby
 x.+(y)
@@ -237,7 +237,7 @@ Significa que a instância "x" tem um método (+) que recebe "y" como parâmetro
 Float#+(BigDecimal)
 ```
 
-Mas o Float não sabe somar diretamente com um BigDecimal. Quando isso acontece, o Ruby usa um mecanismo chamado coerce. Porém BigDecimal não pode ser forçado para FLoat, então é o Float que será forçado para BigDecimal.
+Mas o Float não sabe somar diretamente com um BigDecimal. Quando isso acontece, o Ruby usa um mecanismo chamado `coerce`. Porém BigDecimal não pode ser forçado para FLoat, então é o Float que será forçado para BigDecimal.
 
 Na prática:
 
@@ -249,7 +249,7 @@ a, b = BigDecimal('0.1').coerce(0.1)
 BigDecimal("0.1") + BigDecimal("0.1")
 ```
 
-## Detalhe da implementação em C:
+### Detalhe da implementação em C
 
 Uma pergunta importante que pode surgir: se eu chamo `coerce` para um número Float, ele será convertido com segurança? Ou seja, se 0.1 é impreciso, BigDecimal(0.1) é impreciso?
 
@@ -272,7 +272,8 @@ BigDecimal(0.1)
 **O Ruby conseguiu tomar a decisão mais correta possível quando se mistura BigDecimal com Float**, caso contrário poderíamos ter resultados catastróficos.
 
 
-## A Mágica do Rails
+### A Mágica do Rails
+Até aqui tudo que eu mostrei é Ruby puro, então como funciona para o Ruby on Rails?
 Os tipos em memória são definidos pelos tipos especificados na migração, então vamos pegar esse exemplo:
 
 ###### BigDecimal - exemplo 3
@@ -295,8 +296,8 @@ Outro ponto interessante é que no Rails, graças ao ActiveSupport também temos
 => 0.1e0
 ```
 
-# últimas observações
+## Últimas observações
 
-No geral é muito cômodo e muito comum usar gems no Ruby/Rails para não ter que construir certas coisas. O Ruby e Rails são muito mágicos e muitas vezes a adição de um nova gem no projeto não é só para ganhar tempo, mas porque ninguém do time sabia exatamente como fazer aquela funcionalidade do zero e já que existe uma gem, então vamos usar a gem. Bom, agora que todo mundo consegue entender pelo menos parte das decisões para tratamento monetário (eu não falei sobre suporte para diferentes moedas), deixo aqui a sugestão:
+No geral é muito cômodo e muito comum usar gems no Ruby/Rails para não ter que construir certas coisas. O Ruby e Rails são muito mágicos e muitas vezes a adição de um nova gem no projeto não é só para ganhar tempo, mas porque ninguém do time sabia exatamente como fazer aquela funcionalidade do zero e já que existe uma gem, então vamos usar a gem. Bom, agora que todo mundo consegue entender pelo menos parte das decisões para tratamento monetário (eu não falei sobre suporte para diferentes moedas), deixo aqui a sugestão de uma gem:
 
-https://github.com/RubyMoney/money-rails
+[https://github.com/RubyMoney/money-rails](https://github.com/RubyMoney/money-rails)
