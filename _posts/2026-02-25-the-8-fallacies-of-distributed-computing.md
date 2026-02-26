@@ -10,12 +10,10 @@ pin: true
 media_subpath: '/posts/20260225'
 ---
 
-
-
 ![https://deniseyu.io/](https://deniseyu.io/art/sketchnotes/topic-based/8-fallacies.png)
 imagem: [deniseyu](https://deniseyu.io/)
 
-As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. Dos anos 90 para cá tivemos uma popularização da arquitetura de microserviços enquanto que o monolito se tornou quase que um sinônimo de algo nagativo. Eu gostaria de abordar os tradeoffs dessa escolha ao longo desse artigo.
+As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. As falácias existem porque desenvolvedores tendem a pensar em chamadas remotas como se fossem chamadas locais. Dos anos 90 para cá tivemos uma popularização da arquitetura de microserviços enquanto que o monolito se tornou quase que um sinônimo de algo nagativo. Eu gostaria de abordar os tradeoffs da escolha de microserviços em relação ao monolito e elucidar as falácias ao longo desse artigo com exemplos reais.
 
 Antes de comparar as duas arquiteturas vamos entender melhor sobre cada falácia:
 
@@ -46,6 +44,26 @@ Se você não tratar falhas:
 - Circuit Breaker
 - Idempotência: estratégia usada para evitar que eventos/requisições repetidas geram inconcistências. Por exemplo: um microserviço de pagamento recebe um evento duplicado para creditar saldo na conta do cliente, por exemplo uma entrada via Pix. Usando uma chave identificadora do evento, ou uma chave identificadora do pagamento Pix, podemos analisar se aquele pagamento já existe na base, caso exista você pode simplesmente ignorar o evento duplicado.
 
+## Arquitetura monolito
+
+- Não existe rede entre módulos.
+- Se falhar você toma exception.
+
+## Arquitetura Microserviços
+
+### Chamadas HTTP podem:
+- Dar timeout
+- Retornar 500
+- Cair no meio
+
+### Exemplo Rails
+```ruby
+response = Faraday.post("http://payment-service/pay", payload)
+```
+
+Se você não tratar:
+- O pagamento pode ser processado, mas sua aplicação pode não receber resposta e você pode cobrar duas vezes
+
 ## Falácia 2 - Latência é zero
 
 **Falácia**: Assumir que chamadas remotas são tão rápidas quanto chamadas locais.
@@ -69,6 +87,26 @@ Exemplo:
 - Cache: Utilize cache em dados que mudam com pouco frequência e possuem grande volume de acessos. Caso precise diminuir custos com caching sugiro fortemente a leitura do [Rails Solid Cache](https://github.com/rails/solid_cache)
 - Processamento assíncrono: Use o Sidekiq
 
+## Arquitetura monolito
+
+- Chamada de método: microssegundos.
+
+## Arquitetura Microserviços
+
+- Cada chamada HTTP: 5ms–300ms.
+
+### Exemplo Rails
+
+Se você fizer:
+
+```ruby
+user = UserAPI.fetch(id)
+orders = OrdersAPI.list(user.id)
+payments = PaymentsAPI.list(user.id)
+```
+
+Agora você tem latência acumulada.
+
 
 ## Falácia 3 - A largura de banda é infinita
 
@@ -87,8 +125,30 @@ Exemplo:
 - Compressão
 - Paginação
 - Streaming
-- Evitar over-fetching
+- Evitar over-fetching (pode ser interessante o uso do GraphQL)
 
+## Arquitetura monolito
+
+- Objetos Ruby passam por referência.
+
+## Arquitetura Microserviços
+
+Você serializa JSON.
+
+Se você fizer:
+
+```ruby
+render json: @user
+```
+
+e o user tiver 15 associações carregadas…
+
+Você pode mandar 200KB desnecessários.
+
+### Impacto real
+- Mais latência
+- Mais custo
+- Mais CPU serializando
 
 ## Falácia 4 - A rede é homogênea
 
@@ -111,9 +171,44 @@ um caso clássico onde um projeto usando Ruby versão 3xx exige uma gem maior qu
 
 ### Boas práticas
 - Versionamento de API
-- Contratos bem definidos (OpenAPI, Protobuf)
-- Deploy gradual (canary)
+- Contratos bem definidos e testes de contrato
+- Deploy gradual
 
+## Arquitetura monolito
+
+- Mesma versão Ruby
+- Mesmo processo (Unicorn faria um fork de processo)
+- Mesmo banco
+
+## Arquitetura Microserviços
+
+Você pode ter:
+
+- Rails 7
+- Node 20
+- Java 21
+- Serviços legados
+
+Isso gera:
+- Diferença de encoding
+- Timezone divergente
+- Mudança de contrato quebrando cliente
+
+Exemplo real
+
+Você muda
+
+```ruby
+"value": 100
+```
+
+Para:
+
+```ruby
+"amount": 100
+```
+
+E quebra outro serviço.
 
 ## Falácia 5 - A rede é segura
 
@@ -131,3 +226,85 @@ Inclusive em ambientes corporativos grandes.
 - TLS interno
 - Autenticação entre serviços
 - Rotação de segredos
+
+## Falácia 6 - O custo de transporte é zero
+
+Falácia: Ignorar custo financeiro e computacional da comunicação.
+
+### Realidade
+- Cloud cobra por tráfego (principalmente saída)
+- Serialização consome CPU
+- Transferência consome tempo
+
+Na Amazon Web Services, por exemplo, tráfego entre regiões e saída para internet tem custo.
+
+### Impacto
+- Arquiteturas “microserviços demais” podem aumentar muito o custo.
+
+
+## Falácia 7 - Há somente um administrador
+
+Falácia: Assumir que todo o sistema está sob um único controle.
+
+### Realidade
+- Times diferentes administram partes diferentes
+- Serviços de terceiros
+- APIs externas
+- Governança diferente
+
+### Impacto
+- Dependência organizacional
+- SLAs diferentes
+- Mudanças fora do seu controle
+
+## Falácia 8
+
+Falácia: Achar que os nós da rede são estáticos.
+
+### Realidade
+- Containers sobem e morrem
+- IPs mudam
+- Auto scaling altera número de instâncias
+
+Em ambientes cloud isso é regra.
+
+### Boas práticas
+- Service discovery
+- DNS dinâmico
+- Health checks
+- Arquitetura resiliente
+
+
+## Microserviços vs Monolito
+
+## Monolito
+- Comunicação in-process
+- Sem rede entre módulos
+- Latência praticamente zero
+- Sem serialização JSON
+- Sem retry
+
+Conclusão: muitas falácias simplesmente não aparecem.
+
+Uma chamada:
+
+```ruby
+OrderService.new.process(order)
+```
+
+é muito mais previsível do que:
+
+```ruby
+HTTP.post("http://payment-service/process", ...)
+```
+
+## Microserviços
+
+Aqui **TODAS** as falácias viram problemas reais.
+
+Cada fronteira (boundary) vira:
+- HTTP
+- gRPC
+- Fila
+- Cache remoto
+- Banco separado
