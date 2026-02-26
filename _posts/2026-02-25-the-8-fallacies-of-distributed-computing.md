@@ -44,19 +44,19 @@ Se você não tratar falhas:
 - Circuit Breaker
 - Idempotência: estratégia usada para evitar que eventos/requisições repetidas geram inconsistências. Por exemplo: um microserviço de pagamento recebe um evento duplicado para creditar saldo na conta do cliente, por exemplo uma entrada via Pix. Usando uma chave identificadora do evento, ou uma chave identificadora do pagamento Pix, podemos analisar se aquele pagamento já existe na base, caso exista você pode simplesmente ignorar o evento duplicado.
 
-## Arquitetura monolito
+### Arquitetura monolito
 
 - Não existe rede entre módulos.
 - Se falhar você toma exception.
 
-## Arquitetura Microserviços
+### Arquitetura Microserviços
 
-### Chamadas HTTP podem:
+#### Chamadas HTTP podem:
 - Dar timeout
 - Retornar 500
 - Cair no meio
 
-### Exemplo Rails
+#### Exemplo Rails
 ```ruby
 response = Faraday.post("http://payment-service/pay", payload)
 ```
@@ -87,15 +87,15 @@ Exemplo:
 - Cache: Utilize cache em dados que mudam com pouco frequência e possuem grande volume de acessos. Caso precise diminuir custos com caching sugiro fortemente a leitura do [Rails Solid Cache](https://github.com/rails/solid_cache)
 - Processamento assíncrono: Use o Sidekiq
 
-## Arquitetura monolito
+### Arquitetura monolito
 
 - Chamada de método: microssegundos.
 
-## Arquitetura Microserviços
+### Arquitetura Microserviços
 
 - Cada chamada HTTP: 5ms–300ms.
 
-### Exemplo Rails
+#### Exemplo Rails
 
 Se você fizer:
 
@@ -127,11 +127,11 @@ Exemplo:
 - Streaming
 - Evitar over-fetching (pode ser interessante o uso do GraphQL)
 
-## Arquitetura monolito
+### Arquitetura monolito
 
 - Objetos Ruby passam por referência.
 
-## Arquitetura Microserviços
+### Arquitetura Microserviços
 
 Você serializa JSON.
 
@@ -145,7 +145,7 @@ e o user tiver 15 associações carregadas…
 
 Você pode mandar 200KB desnecessários.
 
-### Impacto real
+#### Impacto real
 - Mais latência
 - Mais custo
 - Mais CPU serializando
@@ -174,13 +174,13 @@ Um caso clássico onde um projeto usando Ruby versão 3xx exige uma gem maior qu
 - Contratos bem definidos e testes de contrato
 - Deploy gradual
 
-## Arquitetura monolito
+### Arquitetura monolito
 
 - Mesma versão Ruby
 - Mesmo processo (Unicorn faria um fork de processo)
 - Mesmo banco
 
-## Arquitetura Microserviços
+### Arquitetura Microserviços
 
 Você pode ter:
 
@@ -227,6 +227,34 @@ Inclusive em ambientes corporativos grandes.
 - Autenticação entre serviços
 - Rotação de segredos
 
+### Arquitetura monolito
+- Não existe tráfego de rede entre partes da aplicação dentro do monolito.
+
+### Arquitetura Microserviços
+Se um serviço for comprometido:
+- Ele pode chamar outros
+- Escalar privilégios
+
+Exemplo ruim:
+
+```ruby
+PaymentAPI.process(order_id)
+```
+
+Sem autenticação entre serviços.
+
+Mesmo que esteja:
+- Dentro da mesma VPC
+- Dentro do mesmo cluster Kubernetes
+- Dentro da mesma empresa
+
+Isso ainda é tráfego de rede.
+
+#### Solução
+- JWT interno
+- Mutual TLS
+- Segregação de rede (nem todo serviço pode falar com todo serviço)
+
 ## Falácia 6 - O custo de transporte é zero
 
 **Falácia**: Ignorar custo financeiro e computacional da comunicação.
@@ -241,6 +269,34 @@ Na Amazon Web Services, por exemplo, tráfego entre regiões e saída para inter
 ### Impacto
 - Arquiteturas “microserviços demais” podem aumentar muito o custo.
 
+### Arquitetura monolito
+- Nenhum custo extra.
+
+### Arquitetura Microserviços
+
+Na Amazon Web Services:
+- Tráfego cross-region custa
+- Egress para internet custa
+- Load balancer custa
+
+Arquitetura distribuída demais = custo operacional alto.
+
+#### Exemplo numérico simples
+
+Suponha:
+
+- Cada chamada transfere 50 KB
+- Cada request do usuário gera 10 chamadas internas
+- 1 milhão de requests/dia
+
+Agora você tem:
+
+```bash
+50 KB × 10 × 1.000.000
+= 500 GB/dia internos
+```
+
+Mesmo que parte disso seja na mesma AZ, se estiver distribuído entre AZs ou passando por load balancers, isso vira custo mensal relevante.
 
 ## Falácia 7 - Há somente um administrador
 
@@ -257,7 +313,7 @@ Na Amazon Web Services, por exemplo, tráfego entre regiões e saída para inter
 - SLAs diferentes
 - Mudanças fora do seu controle
 
-## Falácia 8
+## Falácia 8 - A topologia não muda
 
 **Falácia**: Achar que os nós da rede são estáticos.
 
@@ -274,10 +330,13 @@ Em ambientes cloud isso é regra.
 - Health checks
 - Arquitetura resiliente
 
+### Arquitetura monolito
+- Um processo.
+- Um banco.
 
 ## Microserviços vs Monolito
 
-## Monolito
+### Monolito
 - Comunicação in-process
 - Sem rede entre módulos
 - Latência praticamente zero
@@ -298,7 +357,7 @@ OrderService.new.process(order)
 HTTP.post("http://payment-service/process", ...)
 ```
 
-## Microserviços
+### Microserviços
 
 Aqui **TODAS** as falácias viram problemas reais.
 
