@@ -13,7 +13,7 @@ media_subpath: '/posts/20260225'
 ![https://deniseyu.io/](https://deniseyu.io/art/sketchnotes/topic-based/8-fallacies.png)
 imagem: [deniseyu](https://deniseyu.io/)
 
-As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. As falácias existem porque desenvolvedores tendem a pensar em chamadas remotas como se fossem chamadas locais. Dos anos 90 para cá tivemos uma popularização da arquitetura de microserviços enquanto que o monolito se tornou quase que um sinônimo de algo nagativo. Eu gostaria de abordar os tradeoffs da escolha de microserviços em relação ao monolito e elucidar as falácias ao longo desse artigo com exemplos reais.
+As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. As falácias existem porque os desenvolvedores tendem a pensar em chamadas remotas como se fossem chamadas locais. Dos anos 90 para cá tivemos uma popularização da arquitetura de microserviços enquanto que o monolito se tornou quase que um sinônimo de algo negativo. Eu gostaria de abordar os tradeoffs da escolha de microserviços em relação ao monolito e elucidar as falácias ao longo desse artigo com exemplos reais.
 
 Antes de comparar as duas arquiteturas vamos entender melhor sobre cada falácia:
 
@@ -39,10 +39,10 @@ Se você não tratar falhas:
 
 ### Boas práticas
 
-- Retry com backoff exponencial: estratégia para fazer tentativas em intervalos espaçados de forma exponencial. Talvez você já tenha ouvido falar essa estratégia quando leu mais sobre o sidekiq. O Sideki possui mecanismo de retentativa e funciona com exponential backoff. Você pode ver a tabela de tentativas espalhadas no tempo aqui [Sidekiq exponential backoff](https://gist.github.com/marcotc/39b0d5e8100f0f4cd4d38eff9f09dcd5)
+- Retry com backoff exponencial: estratégia para fazer tentativas em intervalos espaçados de forma exponencial. Talvez você já tenha ouvido falar essa estratégia quando leu mais sobre o sidekiq. O Sidekiq possui mecanismo de retentativa e funciona com exponential backoff. Você pode ver a tabela de tentativas espalhadas no tempo aqui [Sidekiq exponential backoff](https://gist.github.com/marcotc/39b0d5e8100f0f4cd4d38eff9f09dcd5)
 - Timeout bem definido: não deixe um requisição HTTP durar "para sempre". A `gem faraday`define uma espera de padrão 60 segundos, caso o servidor não responda nesse tempo, o faraday lançará uma exceção `Faraday::TimeoutError`.
 - Circuit Breaker
-- Idempotência: estratégia usada para evitar que eventos/requisições repetidas geram inconcistências. Por exemplo: um microserviço de pagamento recebe um evento duplicado para creditar saldo na conta do cliente, por exemplo uma entrada via Pix. Usando uma chave identificadora do evento, ou uma chave identificadora do pagamento Pix, podemos analisar se aquele pagamento já existe na base, caso exista você pode simplesmente ignorar o evento duplicado.
+- Idempotência: estratégia usada para evitar que eventos/requisições repetidas geram inconsistências. Por exemplo: um microserviço de pagamento recebe um evento duplicado para creditar saldo na conta do cliente, por exemplo uma entrada via Pix. Usando uma chave identificadora do evento, ou uma chave identificadora do pagamento Pix, podemos analisar se aquele pagamento já existe na base, caso exista você pode simplesmente ignorar o evento duplicado.
 
 ## Arquitetura monolito
 
@@ -110,7 +110,7 @@ Agora você tem latência acumulada.
 
 ## Falácia 3 - A largura de banda é infinita
 
-Falácia: Assumir que podemos transferir qualquer volume de dados sem impacto.
+**Falácia**: Assumir que podemos transferir qualquer volume de dados sem impacto.
 
 ### Realidade
 - Transferência grande consome banda
@@ -152,7 +152,7 @@ Você pode mandar 200KB desnecessários.
 
 ## Falácia 4 - A rede é homogênea
 
-Falácia: Supor que todos os nós usam o mesmo hardware, sistema operacional, versão de runtime, etc.
+**Falácia**: Supor que todos os nós usam o mesmo hardware, sistema operacional, versão de runtime, etc.
 
 ### Realidade
 - Containers diferentes
@@ -167,7 +167,7 @@ Falácia: Supor que todos os nós usam o mesmo hardware, sistema operacional, ve
 
 Exemplo:
 
-um caso clássico onde um projeto usando Ruby versão 3xx exige uma gem maior que 2.0.0 e o outro projeto com Ruby 2xx que exige a gem menor que 2.0.0 obrigatoriamente. Porém a atualização da gem também remove vários métodos depreciados, sendo impossível manter compatibilidade com ambos os projetos. Agora imagine que essa gem é na verdade uma dependência da gem principal que está no seu projeto Rails. Seus projetos teriam que criar duas versões da gem principal, uma que mantém a dependência menor que 2.0.0 e outra que mantém maior que 2.0.0. Você pode argumentar que seria só atualizar o Ruby para manter todos os projetos na versão 3xx, mas a realidade é que isso pode causar mais problemas de compatibilidade.
+Um caso clássico onde um projeto usando Ruby versão 3xx exige uma gem maior que 2.0.0 e o outro projeto com Ruby 2xx que exige a gem menor que 2.0.0 obrigatoriamente. Porém a atualização da gem também remove vários métodos depreciados, sendo impossível manter compatibilidade com ambos os projetos. Agora imagine que essa gem é na verdade uma dependência da gem principal que está no seu projeto Rails. Seus projetos teriam que criar duas versões da gem principal, uma que mantém a dependência menor que 2.0.0 e outra que mantém maior que 2.0.0. Você pode argumentar que seria só atualizar o Ruby para manter todos os projetos na versão 3xx, mas a realidade é que isso pode causar mais problemas de compatibilidade.
 
 ### Boas práticas
 - Versionamento de API
@@ -212,7 +212,7 @@ E quebra outro serviço.
 
 ## Falácia 5 - A rede é segura
 
-Falácia: Achar que só porque está “dentro da rede interna” está protegido.
+**Falácia**: Achar que só porque está “dentro da rede interna” está protegido.
 
 ### Realidade
 - Ataques internos existem
@@ -229,7 +229,7 @@ Inclusive em ambientes corporativos grandes.
 
 ## Falácia 6 - O custo de transporte é zero
 
-Falácia: Ignorar custo financeiro e computacional da comunicação.
+**Falácia**: Ignorar custo financeiro e computacional da comunicação.
 
 ### Realidade
 - Cloud cobra por tráfego (principalmente saída)
@@ -244,7 +244,7 @@ Na Amazon Web Services, por exemplo, tráfego entre regiões e saída para inter
 
 ## Falácia 7 - Há somente um administrador
 
-Falácia: Assumir que todo o sistema está sob um único controle.
+**Falácia**: Assumir que todo o sistema está sob um único controle.
 
 ### Realidade
 - Times diferentes administram partes diferentes
@@ -259,7 +259,7 @@ Falácia: Assumir que todo o sistema está sob um único controle.
 
 ## Falácia 8
 
-Falácia: Achar que os nós da rede são estáticos.
+**Falácia**: Achar que os nós da rede são estáticos.
 
 ### Realidade
 - Containers sobem e morrem
