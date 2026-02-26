@@ -7,6 +7,7 @@ date: 2025-12-18 16:20:00 -0300
 categories: [Blogging, Tutorial]
 tags: [Ruby, Rails]
 pin: true
+math: true
 media_subpath: '/posts/20251218'
 ---
 
@@ -40,9 +41,9 @@ porém **não é adequado para cálculos**. A representação de números em tex
 
 ## Tipo Float
 
-O tipo Float é impreciso porque utiliza representação binária de ponto flutuante, o que impede que muitos números decimais comuns (como 0.1 ou 0.01) sejam representados exatamente. Esses valores são armazenados como aproximações, e pequenas diferenças se acumulam a cada operação matemática.
+O tipo Float é impreciso porque utiliza representação binária de ponto flutuante, o que impede que muitos números decimais comuns (como $ 0.1 $ ou $ 0.01 $) sejam representados exatamente. Esses valores são armazenados como aproximações, e pequenas diferenças se acumulam a cada operação matemática.
 
-Então pense em operações onde 0.1 é por exemplo 10% (10/100) ou 0.01 é 1% (1/100). Esses valores são muito comuns em contexto financeiro, e eu poderia citar outros vários valores como taxa IOF, taxa DI, etc. Que por serem porcentagem vão estar definidos geralmente entre 0 e 1.
+Então pense em operações onde 0.1 é por exemplo 10% ou $ \frac{10}{100} $ ou 0.01 é 1% ou $ \frac{1}{100} $. Esses valores são muito comuns em contexto financeiro, e eu poderia citar outros vários valores como taxa IOF, taxa DI, etc. Que por serem porcentagem vão estar definidos geralmente entre 0 e 1.
 
 Nesse cenários temos situações que podem levar a bugs muito sérios, principalmente quando fazemos comparações.
 Então imagine que você queira fazer uma soma de todas as taxas de um determinado cliente para classificá-lo em uma categoria:
@@ -65,7 +66,7 @@ end
 => "Category B" # Categoria incorreta
 ```
 
-Existem vários outros exemplos e alguns podem facilmente te enganar, então vamos explorar um caso que a princípio parece inofensivo: se eu digito 0.1 no IRB e dou um ENTER ele me retorna 0.1
+Existem vários outros exemplos e alguns podem facilmente te enganar, então vamos explorar um caso que a princípio parece inofensivo: se eu digito $ 0.1 $ no IRB e dou um ENTER ele me retorna $ 0.1 $
 
 ###### Float - exemplo 2
 ```ruby
@@ -83,7 +84,7 @@ irb(main):086:0> printf("%.30f", 0.1)
 0.100000000000000005551115123126
 ```
 
-Agora podemos ver a imprecisão! Bom, você pode argumentar que existem poucos cenários onde eu precisaria de uma precisão de 30 casas decimais (e você estaria certo). Na prática, se você não se importa com tantas casas decimais assim, significa que você está dando atenção só para as primeiras casas decimais, afinal, não existe um valor monetário como __0.100000000000000005551115123126__ , seria somente R$ 0.10 ou 10 centavos. Portanto o valor que o usuário verá em tela foi truncado, mas para esse caso felizmente a imprecisão não alterou o resultado final.
+Agora podemos ver a imprecisão! Bom, você pode argumentar que existem poucos cenários onde eu precisaria de uma precisão de 30 casas decimais (e você estaria certo). Na prática, se você não se importa com tantas casas decimais assim, significa que você está dando atenção só para as primeiras casas decimais, afinal, não existe um valor monetário como $ 0.100000000000000005551115123126 $, seria somente R$ 0.10 ou 10 centavos. Portanto o valor que o usuário verá em tela foi truncado, mas para esse caso felizmente a imprecisão não alterou o resultado final.
 
 Existem ainda casos onde a imprecisão é ainda mais evidente:
 
@@ -112,7 +113,7 @@ Failure/Error: expect(calculation).to eq(110.98)
 ```
 
 ### O problema da truncagem
-Dado o exemplo do valor 0.1 (Float - exemplo 3), nós não chamamos o método `truncate` e ainda sim eu argumentei que o valor foi truncado, bom, de forma consciente ou não, estamos truncando os valores para duas casas decimais. Isso é um fato porque o usuário não vai ver em tela __0.100000000000000005551115123126__, então ainda que não tenha sido de forma direta, houve uma truncagem, mas nesse caso sem introdução de imprecisão.
+Dado o exemplo do valor 0.1 (Float - exemplo 3), nós não chamamos o método `truncate` e ainda sim eu argumentei que o valor foi truncado, bom, de forma consciente ou não, estamos truncando os valores para duas casas decimais. Isso é um fato porque o usuário não vai ver em tela $ 0.100000000000000005551115123126 $, então ainda que não tenha sido de forma direta, houve uma truncagem, mas nesse caso sem introdução de imprecisão.
 
 O grande problema é que a truncagem pode levar a um valor final completamente diferente do valor matematicamente correto. Vou dar um exemplo explorando o pior cenário possível deste caso, aquele que todo programador vai falar "ah! mas eu nunca faria assim" ou "ninguém cometeria um erro tão bobo assim". Bom, essa é uma discussão inútil, o ponto é que se existe a possibilidade de acontecer, vai acontecer.
 
