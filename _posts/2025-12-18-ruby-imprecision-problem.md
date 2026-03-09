@@ -269,6 +269,25 @@ BigDecimal('0.1')
 BigDecimal(0.1)
 ```
 
+** Detalhe ** Esse comportamento é válido para versões mais recentes do Ruby 3xx. Eu testei para as versões Ruby 2.7.7 e 2.6.5 e o comportamento é outro:
+
+```ruby
+BigDecimal(3.33333)
+ArgumentError: can't omit precision for a Float.
+```
+
+Ou sejá, é necessário o uso explícito de `.to_s` ou você deve explicitar a quantidade de dígitos significativos:
+
+```ruby
+BigDecimal(3.33333.to_s)
+=> 0.333333e1
+
+# OU
+
+BigDecimal(3.33333, 10)
+=> 0.333333e1
+```
+
 
 **O Ruby conseguiu tomar a decisão mais correta possível quando se mistura BigDecimal com Float**, caso contrário poderíamos ter resultados catastróficos.
 
@@ -296,6 +315,84 @@ Outro ponto interessante é que no Rails, graças ao ActiveSupport também temos
 "0.1".to_d
 => 0.1e0
 ```
+
+## Práticas financeiras e arredondamento
+
+Em sistemas financeiros existe uma distinção muito importante entre valor interno de cálculo e valor monetário exibido/liquidado. Isso evita inconsistências contábeis e erros acumulados.
+
+### Dinheiro normalmente tem 2 casas decimais
+Para BRL (Real), o padrão monetário é 2 casas decimais.
+
+Ou seja:
+
+- R$ 100,87 é um valor monetário válido
+- R$ 100,873333 não é um valor monetário liquidável, apenas um valor intermediário de cálculo
+
+Sistemas financeiros geralmente:
+
+- calculam com alta precisão
+- arredondam no momento da liquidação
+
+Se uma transação é registrada no ledger com valor maior que duas casas decimais é porque houve algum tipo de cálculo, por exemplo, uma venda no valor bruto de 987,65 com uma taxa de 2,9735% (0,029735) resulta em uma taxa líquida de 29,36579275, então o valor líquido é de $ 987,65 - 29,36579275 = 958,28420725 $ Quando vamos representar esse valor em tela usamos arredondamento de duas casas decimais com a regra _half_up_.
+
+```ruby
+require "bigdecimal"
+
+value = BigDecimal("958.28420725")
+value.round(2, :half_up)
+```
+
+### Política de arredondamento
+
+Exemplo de documentação interna:
+
+Precision: 2 decimals \
+Método: round half up \
+Aplicar em:
+- settlement
+- fees
+- taxes
+
+Isso evita bugs difíceis de rastrear.
+
+**Um detalhe importante**: o momento do arredondamento é tão importante quanto o método.
+
+Por exemplo:
+
+- Modelo A: calcular -> arredondar -> salvar/persistir em banco o valor arredondado
+- Modelo B: calcular -> salvar/persistir em banco o valor preciso -> arredondar somente no momento da liquidação
+
+### Penny Drift
+
+Dependendo do modelo de arredondamento usado, é possível que você encontre um problema clássico chamado de "Penny Drift" onde a diferença de arredondamento de centavos começa a se acumular ao longo do tempo, gerando divergências contábeis mesmo usando a tipagem correta para valor monetário.
+
+Ele aparece principalmente quando:
+
+- Existem muitos cálculos com frações
+- Há várias etapas de arredondamento
+- Ou divisão de valores entre várias partes
+
+Como já visto na seção de tipagem Float, mesmo diferenças de R$ 0,01 podem virar valores significativos em escala. Então o modelo onde não há arredondamentos e não há truncagens nas partes intermediárias do cálculo é o ideal nesse caso, estamos falando aqui que algo próximo do modelo B citado na **política de arredondamento** seria o ideal.
+
+Outro exemplo comum é na divisão de valores:
+
+Dividir R$ 100,00 entre 3 pessoas da 33,333, mas multiplicando esse valor por 3 temos 99,999, então faltou 1 centavo. Esse centavo precisa ir para alguém, se o sistema sempre der o centavo para a mesma parte, surge drift.
+
+Distribuição justa de centavos:
+
+Ao invés de distribuir o centavo sempre para primeiro da lista (criando assim um sistema injusto), é possível implementar um algoritmo chamado de "Largest Remainder Method"
+
+Pseudocódigo do algoritmo:
+
+1. calcular valor preciso para cada participante
+2. truncar para centavos
+3. calcular resto = valor_preciso - valor_truncado
+4. somar valores truncados
+5. calcular centavos_restantes
+6. ordenar participantes por resto (decrescente)
+7. distribuir 1 centavo para cada um até acabar
+
+O custo do algoritmo é O(n log n) por causa da ordenação. Para splits com até centenas de participantes isso é trivial.
 
 ## Últimas observações
 
