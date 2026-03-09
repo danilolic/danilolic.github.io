@@ -380,7 +380,7 @@ Dividir R$ 100,00 entre 3 pessoas da 33,333, mas multiplicando esse valor por 3 
 
 Distribuição justa de centavos:
 
-Ao invés de distribuir o centavo sempre para primeiro da lista (criando assim um sistema injusto), é possível implementar um algoritmo chamado de "Largest Remainder Method"
+Ao invés de distribuir o centavo sempre para primeiro da lista (criando assim um sistema injusto), é possível implementar um algoritmo chamado de "Largest Remainder Method" proposto por Alexander Hamilton
 
 Pseudocódigo do algoritmo:
 
