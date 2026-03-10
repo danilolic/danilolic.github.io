@@ -269,7 +269,7 @@ BigDecimal('0.1')
 BigDecimal(0.1)
 ```
 
-** Detalhe ** Esse comportamento é válido para versões mais recentes do Ruby 3xx. Eu testei para as versões Ruby 2.7.7 e 2.6.5 e o comportamento é outro:
+**Detalhe** Esse comportamento é válido para versões mais recentes, eu testei com a versão 3.2.1, porém para as versões Ruby 2.7.7 e 2.6.5 e o comportamento é outro:
 
 ```ruby
 BigDecimal(3.33333)
@@ -333,7 +333,7 @@ Sistemas financeiros geralmente:
 - calculam com alta precisão
 - arredondam no momento da liquidação
 
-Se uma transação é registrada no ledger com valor maior que duas casas decimais é porque houve algum tipo de cálculo, por exemplo, uma venda no valor bruto de 987,65 com uma taxa de 2,9735% (0,029735) resulta em uma taxa líquida de 29,36579275, então o valor líquido é de $ 987,65 - 29,36579275 = 958,28420725 $ Quando vamos representar esse valor em tela usamos arredondamento de duas casas decimais com a regra _half_up_.
+Se uma transação é registrada no ledger com valor maior que duas casas decimais é porque houve algum tipo de cálculo, afinal não existe valor monetário com mais de duas casas decimais. Por exemplo, uma venda no valor bruto de 987,65 com uma taxa de 2,9735% (0,029735) resulta em uma taxa líquida de 29,36579275, então o valor líquido é de $ 987,65 - 29,36579275 = 958,28420725 $ Para representar esse valor em tela usamos arredondamento de duas casas decimais com a regra _half_up_.
 
 ```ruby
 require "bigdecimal"
