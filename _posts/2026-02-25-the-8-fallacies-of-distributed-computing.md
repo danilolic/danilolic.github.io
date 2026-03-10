@@ -13,7 +13,7 @@ media_subpath: '/posts/20260225'
 ![https://deniseyu.io/](https://deniseyu.io/art/sketchnotes/topic-based/8-fallacies.png)
 imagem: [deniseyu](https://deniseyu.io/)
 
-As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. As falácias existem porque os desenvolvedores tendem a pensar em chamadas remotas como se fossem chamadas locais. Dos anos 90 para cá tivemos uma popularização da arquitetura de microserviços enquanto que o monolito se tornou quase que um sinônimo de algo negativo. Eu gostaria de abordar os tradeoffs **somente sob a ótica das falácias**, comparando microserviços e monolito e elucidar as falácias ao longo desse artigo com exemplos reais.
+As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. As falácias existem porque os desenvolvedores tendem a pensar em chamadas remotas como se fossem chamadas locais. Dos anos 90 para cá, tivemos uma popularização da arquitetura de microserviços, enquanto o monolito se tornou quase que um sinônimo de algo negativo. Eu gostaria de abordar os trade-offs **somente sob a ótica das falácias**, comparando microserviços e monolito e elucidar as falácias ao longo desse artigo com exemplos reais.
 
 Antes de comparar as duas arquiteturas vamos entender melhor sobre cada falácia:
 
@@ -39,10 +39,10 @@ Se você não tratar falhas:
 
 ### Boas práticas
 
-- Retry com backoff exponencial: estratégia para fazer tentativas em intervalos espaçados de forma exponencial. Talvez você já tenha ouvido falar essa estratégia quando leu mais sobre o sidekiq. O Sidekiq possui mecanismo de retentativa e funciona com exponential backoff. Você pode ver a tabela de tentativas espalhadas no tempo aqui [Sidekiq exponential backoff](https://gist.github.com/marcotc/39b0d5e8100f0f4cd4d38eff9f09dcd5)
+- Retry com backoff exponencial: estratégia para fazer tentativas em intervalos espaçados de forma exponencial. Talvez você já tenha ouvido falar dessa estratégia quando leu mais sobre o sidekiq. O Sidekiq possui mecanismo de retentativa e funciona com exponential backoff. Você pode ver a tabela de tentativas espalhadas no tempo aqui [Sidekiq exponential backoff](https://gist.github.com/marcotc/39b0d5e8100f0f4cd4d38eff9f09dcd5)
 - Timeout bem definido: não deixe um requisição HTTP durar "para sempre". A `gem faraday`define uma espera de padrão 60 segundos, caso o servidor não responda nesse tempo, o faraday lançará uma exceção `Faraday::TimeoutError`.
 - Circuit Breaker
-- Idempotência: estratégia usada para evitar que eventos/requisições repetidas geram inconsistências. Por exemplo: um microserviço de pagamento recebe um evento duplicado para creditar saldo na conta do cliente, por exemplo uma entrada via Pix. Usando uma chave identificadora do evento, ou uma chave identificadora do pagamento Pix, podemos analisar se aquele pagamento já existe na base, caso exista você pode simplesmente ignorar o evento duplicado.
+- Idempotência: estratégia usada para evitar que eventos/requisições repetidas gerem inconsistências. Por exemplo: um microserviço de pagamento recebe um evento duplicado para creditar saldo na conta do cliente, por exemplo, uma entrada via Pix. Usando uma chave identificadora do evento, ou uma chave identificadora do pagamento Pix, podemos analisar se aquele pagamento já existe na base. Caso exista, você pode simplesmente ignorar o evento duplicado.
 
 ### Arquitetura monolito
 
@@ -167,7 +167,7 @@ Você pode mandar 200KB desnecessários.
 
 Exemplo:
 
-Um caso clássico onde um projeto usando Ruby versão 3xx exige uma gem maior que 2.0.0 e o outro projeto com Ruby 2xx que exige a gem menor que 2.0.0 obrigatoriamente. Porém a atualização da gem também remove vários métodos depreciados, sendo impossível manter compatibilidade com ambos os projetos. Agora imagine que essa gem é na verdade uma dependência da gem principal que está no seu projeto Rails. Seus projetos teriam que criar duas versões da gem principal, uma que mantém a dependência menor que 2.0.0 e outra que mantém maior que 2.0.0. Você pode argumentar que seria só atualizar o Ruby para manter todos os projetos na versão 3xx, mas a realidade é que isso pode causar mais problemas de compatibilidade.
+Um caso clássico onde um projeto usando Ruby versão 3xx exige uma gem maior que 2.0.0 e o outro projeto com Ruby 2xx que exige a gem menor que 2.0.0 obrigatoriamente. Porém, a atualização da gem também remove vários métodos depreciados, sendo impossível manter compatibilidade com ambos os projetos. Agora imagine que essa gem é na verdade uma dependência da gem principal que está no seu projeto Rails. Seus projetos teriam que criar duas versões da gem principal, uma que mantém a dependência menor que 2.0.0 e outra que mantém maior que 2.0.0. Você pode argumentar que seria só atualizar o Ruby para manter todos os projetos na versão 3xx, mas a realidade é que isso pode causar mais problemas de compatibilidade.
 
 ### Boas práticas
 - Versionamento de API
@@ -365,10 +365,10 @@ OrderService.new.process(order)
 HTTP.post("http://payment-service/process", ...)
 ```
 
-Logo acima eu falei que a adoção de microserviços cedo de mais causa complexidade organizacional. Um questionamento válido é que o monolito é o responsável pelo crescimento da complexidade organizacional, então "como assim a adoção de microserviços aumenta a complexidade organizacional? Não é o contrário?". Bom, a resposta dessa pergunta é bem longa, então vou ter que escrever um outro artigo sobre isso.
+Logo acima, eu falei que a adoção de microserviços cedo demais causa complexidade organizacional. Um questionamento válido é que o monolito é o responsável pelo crescimento da complexidade organizacional, então “como assim a adoção de microserviços aumenta a complexidade organizacional? Não é o contrário?”. Bom, a resposta dessa pergunta é bem longa, então vou ter que escrever um outro artigo sobre isso.
 
-Por fim, eu acho interessante como algumas coisas foram debatidas décadas atrás, a referência base desse meu artigo é um outro de 1994. Existe uma ciência por trás do desenvolvimento de software e felizmente muitos dilemas já foram resolvidos. Ainda sim, vários anos depois ainda é muito comum cair em problemas já resolvidos. Me vem sempre um trecho do professor Clóvis de Barros:
+Por fim, eu acho interessante como algumas coisas foram debatidas décadas atrás, a referência base desse meu artigo é um outro de 1994. Existe uma ciência por trás do desenvolvimento de software e, felizmente, muitos dilemas já foram resolvidos. Ainda sim, vários anos depois, ainda é muito comum cair em problemas já resolvidos. Me vem sempre um trecho do professor Clóvis de Barros:
 
-> Porque o cara na grécia cinco séculos antes de Cristo descobriu o que mais de dois mil anos depois você não consegue nem aplicar.
+> Porque o cara na Grécia, cinco séculos antes de Cristo, descobriu o que mais de dois mil anos depois você não consegue nem aplicar.
 
-Bom, eu criei esse blog justamente para me aprofundar nesses artigos e ser um pouco mais acadêmico nas minhas decisões e com isso, eu espero de alguma forma ajudar quem estiver lendo.
+Bom, eu criei esse blog justamente para me aprofundar nesses artigos e ser um pouco mais acadêmico nas minhas decisões e, com isso, eu espero de alguma forma ajudar quem estiver lendo.
