@@ -4,7 +4,7 @@ description: >-
   As 8 Falácias de sistemas distribuídos
 author: danilo
 date: 2026-02-20 16:20:00 -0300
-categories: [Blogging, Not ready]
+categories: [Blogging]
 tags: [Ruby on Rails, Distributed Systems]
 pin: true
 media_subpath: '/posts/20260225'
