@@ -3,7 +3,7 @@ title: Microserviços vs Monolito sob a ótica das falácias
 description: >-
   As 8 Falácias de sistemas distribuídos
 author: danilo
-date: 2025-12-18 16:20:00 -0300
+date: 2026-02-20 16:20:00 -0300
 categories: [Blogging, Not ready]
 tags: [Ruby on Rails, Distributed Systems]
 pin: true
@@ -13,7 +13,7 @@ media_subpath: '/posts/20260225'
 ![https://deniseyu.io/](https://deniseyu.io/art/sketchnotes/topic-based/8-fallacies.png)
 imagem: [deniseyu](https://deniseyu.io/)
 
-As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. As falácias existem porque os desenvolvedores tendem a pensar em chamadas remotas como se fossem chamadas locais. Dos anos 90 para cá tivemos uma popularização da arquitetura de microserviços enquanto que o monolito se tornou quase que um sinônimo de algo negativo. Eu gostaria de abordar os tradeoffs da escolha de microserviços em relação ao monolito e elucidar as falácias ao longo desse artigo com exemplos reais.
+As 8 Falácias dos Sistemas Distribuídos foram formalizadas por engenheiros da Sun Microsystems em 1994. Elas representam suposições erradas que desenvolvedores frequentemente fazem ao projetar sistemas distribuídos. As falácias existem porque os desenvolvedores tendem a pensar em chamadas remotas como se fossem chamadas locais. Dos anos 90 para cá tivemos uma popularização da arquitetura de microserviços enquanto que o monolito se tornou quase que um sinônimo de algo negativo. Eu gostaria de abordar os tradeoffs **somente sob a ótica das falácias**, comparando microserviços e monolito e elucidar as falácias ao longo desse artigo com exemplos reais.
 
 Antes de comparar as duas arquiteturas vamos entender melhor sobre cada falácia:
 
@@ -219,8 +219,6 @@ E quebra outro serviço.
 - Vazamentos de credenciais acontecem
 - Movimento lateral é comum
 
-Inclusive em ambientes corporativos grandes.
-
 ### Boas práticas
 - Zero Trust
 - TLS interno
@@ -228,22 +226,20 @@ Inclusive em ambientes corporativos grandes.
 - Rotação de segredos
 
 ### Arquitetura monolito
-- Não existe tráfego de rede entre partes da aplicação dentro do monolito.
+- Não existe tráfego de rede
 
 ### Arquitetura Microserviços
 Se um serviço for comprometido:
 - Ele pode chamar outros
 - Escalar privilégios
 
-Exemplo ruim:
+Exemplo ruim (sem autenticação):
 
 ```ruby
 PaymentAPI.process(order_id)
 ```
 
-Sem autenticação entre serviços.
-
-Mesmo que esteja:
+Sem autenticação entre serviços, mesmo que eteja:
 - Dentro da mesma VPC
 - Dentro do mesmo cluster Kubernetes
 - Dentro da mesma empresa
@@ -267,7 +263,7 @@ Isso ainda é tráfego de rede.
 Na Amazon Web Services, por exemplo, tráfego entre regiões e saída para internet tem custo.
 
 ### Impacto
-- Arquiteturas “microserviços demais” podem aumentar muito o custo.
+- Arquiteturas com “microserviços demais” podem aumentar muito o custo.
 
 ### Arquitetura monolito
 - Nenhum custo extra.
@@ -292,11 +288,21 @@ Suponha:
 Agora você tem:
 
 ```bash
-50 KB × 10 × 1.000.000
+50 KB × 10 chamadas internas × 1.000.000 requests/dia
 = 500 GB/dia internos
 ```
 
 Mesmo que parte disso seja na mesma AZ, se estiver distribuído entre AZs ou passando por load balancers, isso vira custo mensal relevante.
+
+| Tipo             | Exemplo                   | Custo       |
+| ---------------- | ------------------------- | ----------- |
+| In-process       | Monolito Rails            | Zero        |
+| Interna mesma AZ | EC2 → EC2                 | Baixo       |
+| Cross-AZ         | App → DB em outra AZ      | Pago        |
+| Cross-Region     | us-east-1 → us-west-2     | Alto        |
+| Externa          | API → Usuário             | Pago por GB |
+| NAT              | Private subnet → Internet | Pago        |
+
 
 ## Falácia 7 - Há somente um administrador
 
@@ -334,18 +340,20 @@ Em ambientes cloud isso é regra.
 - Um processo.
 - Um banco.
 
-## Microserviços vs Monolito
+## Conclusão
 
-### Monolito
-- Comunicação in-process
-- Sem rede entre módulos
-- Latência praticamente zero
-- Sem serialização JSON
-- Sem retry
+Muitas empresas adotam microserviços cedo demais. Elas saem de:
 
-Conclusão: muitas falácias simplesmente não aparecem.
+- Complexidade de negócio
 
-Uma chamada:
+Para:
+
+- Complexidade de negócio
+- Complexidade distribuída
+- Complexidade organizacional
+- Complexidade de rede
+
+afinal, uma chamada:
 
 ```ruby
 OrderService.new.process(order)
@@ -357,13 +365,10 @@ OrderService.new.process(order)
 HTTP.post("http://payment-service/process", ...)
 ```
 
-### Microserviços
+Logo acima eu falei que a adoção de microserviços cedo de mais causa complexidade organizacional. Um questionamento válido é que o monolito é o responsável pelo crescimento da complexidade organizacional, então "como assim a adoção de microserviços aumenta a complexidade organizacional? Não é o contrário?". Bom, a resposta dessa pergunta é bem longa, então vou ter que escrever um outro artigo sobre isso.
 
-Aqui **TODAS** as falácias viram problemas reais.
+Por fim, eu acho interessante como algumas coisas foram debatidas décadas atrás, a referência base desse meu artigo é um outro de 1994. Existe uma ciência por trás do desenvolvimento de software e felizmente muitos dilemas já foram resolvidos. Ainda sim, vários anos depois ainda é muito comum cair em problemas já resolvidos. Me vem sempre um trecho do professor Clóvis de Barros:
 
-Cada fronteira (boundary) vira:
-- HTTP
-- gRPC
-- Fila
-- Cache remoto
-- Banco separado
+> Porque o cara na grécia cinco séculos antes de Cristo descobriu o que mais de dois mil anos depois você não consegue nem aplicar.
+
+Bom, eu criei esse blog justamente para me aprofundar nesses artigos e ser um pouco mais acadêmico nas minhas decisões e com isso, eu espero de alguma forma ajudar quem estiver lendo.
