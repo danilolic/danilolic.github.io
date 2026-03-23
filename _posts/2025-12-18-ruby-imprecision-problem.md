@@ -11,6 +11,9 @@ math: true
 media_subpath: '/posts/20251218'
 ---
 
+![https://www.deviantart.com/kevron2001/art/Drowning-In-Wealth-909236225/](https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/fdbbd3a2-6796-44bd-b9ae-f53be2e0d43c/df1c35t-c3b38e6d-be00-496f-8509-ae48fa0de488.jpg/v1/fill/w_968,h_825,q_70,strp/drowning_in_wealth_by_kevron2001_df1c35t-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA5MSIsInBhdGgiOiIvZi9mZGJiZDNhMi02Nzk2LTQ0YmQtYjlhZS1mNTNiZTJlMGQ0M2MvZGYxYzM1dC1jM2IzOGU2ZC1iZTAwLTQ5NmYtODUwOS1hZTQ4ZmEwZGU0ODguanBnIiwid2lkdGgiOiI8PTEyODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.BzrnxX73VGtRGXsBskN4Q6awvabMw1Q1Vr_WmrVYOi4)
+imagem: [kevron2001](https://www.deviantart.com/kevron2001/)
+
 Ao lidar com valores monetários em sistemas de software, a forma como esses dados são armazenados e manipulados é um ponto crítico para garantir precisão, consistência e segurança.
 
 Existem diferentes abordagens para representar valores monetários, cada uma com vantagens e limitações. Os tipos básicos mais usados são String, Inteiro, Float e Decimal, então vamos falar brevemente sobre cada um desses tipos.
