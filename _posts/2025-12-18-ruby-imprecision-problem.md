@@ -380,7 +380,7 @@ Outro exemplo comum é na divisão de valores:
 
 Dividir R$ 100,00 entre 3 pessoas resulta em 33,333, mas multiplicando esse valor por 3 temos 99,999, então essa divisão "sumiu" com 1 centavo. Esse centavo precisa ir para alguém.
 
-Distribuição justa de centavos:
+### O Método dos Maiores Restos
 
 Ao invés de distribuir o centavo sempre para o primeiro da lista (criando assim um sistema injusto), é possível implementar um algoritmo chamado de "O Método dos Maiores Restos" (Largest Remainder Method) proposto por Alexander Hamilton
 
@@ -393,6 +393,61 @@ Pseudocódigo do algoritmo:
 5. calcular centavos_restantes
 6. ordenar participantes por resto (decrescente)
 7. distribuir 1 centavo para cada um até acabar
+
+Exemplo com 4 participantes
+
+queremos dividir: R$ 10,03
+
+Pesos:
+
+A = 40%\
+B = 30%\
+C = 20%\
+D = 10%
+
+#### Calcular valores precisos multiplicando
+
+A = 10,03 × 0,40 = 4,012\
+B = 10,03 × 0,30 = 3,009\
+C = 10,03 × 0,20 = 2,006\
+D = 10,03 × 0,10 = 1,003
+
+#### Truncar para centavos
+
+A = 4,01\
+B = 3,00\
+C = 2,00\
+D = 1,00
+
+Somando: 4,01 + 3,00 + 2,00 + 1,00 = 10,01, mas o total deveria ser: 10,03, então faltam 2 centavos
+
+#### Calcular os restos
+
+A resto = 0,002\
+B resto = 0,009\
+C resto = 0,006\
+D resto = 0,003
+
+#### Ordenar restos (maior → menor)
+
+B = 0,009\
+C = 0,006\
+D = 0,003\
+A = 0,002
+
+#### Distribuir os centavos restantes
+Temos 2 centavos para distribuir.
+
+1º centavo → B = 3,01\
+2º centavo → C = 2,01
+
+#### Resultado final
+A = 4,01\
+B = 3,01\
+C = 2,01\
+D = 1,00
+
+Somando: 4,01 + 3,01 + 2,01 + 1,00 = 10,03
 
 O custo do algoritmo é O(n log n) por causa da ordenação. Para splits com até centenas de participantes isso é trivial.
 
