@@ -15,7 +15,9 @@ Ao lidar com valores monetários em sistemas de software, a forma como esses dad
 
 Existem diferentes abordagens para representar valores monetários, cada uma com vantagens e limitações. Os tipos básicos mais usados são String, Inteiro, Float e Decimal, então vamos falar brevemente sobre cada um desses tipos.
 
-## Tipo String
+## Tipos Primitivos
+
+### Tipo String
 
 O uso de strings, é comum em contextos de exibição e entrada de dados.
 
@@ -39,7 +41,7 @@ E a serialização da resposta HTTP pode conter um número representado como Str
 
 porém **não é adequado para cálculos**. A representação de números em texto pode ser problemática em linguagens fracamente tipadas igual o Javascript onde você consegue fazer algo como `String + Number` sem gerar nenhum aviso, mas gerando um erro lógico silencioso que pode causar problemas. Em linguagens fortemente tipadas como o Ruby, você vai tomar um erro em tempo de execução. Uma única exceção é que Ruby aceita a multiplicação `String * Number`, então é um ponto que merece atenção, mas acredito que com bons testes você não terá problemas, mas caso queira um pouco mais de segurança vale a pena usar a gem `Dry::Validation` para assegurar tipos. Em linguagens estaticamente tipadas esse erro seria pego em tempo de compilação, portanto seria possível identificar e corrigir o problema em uma etapa antes do código ir para produção, essa é grande vantagem dessas linguagens.
 
-## Tipo Float
+### Tipo Float
 
 O tipo Float é impreciso porque utiliza representação binária de ponto flutuante, o que impede que muitos números decimais comuns (como $ 0.1 $ ou $ 0.01 $) sejam representados exatamente. Esses valores são armazenados como aproximações, e pequenas diferenças se acumulam a cada operação matemática.
 
@@ -112,7 +114,7 @@ Failure/Error: expect(calculation).to eq(110.98)
             got: 110.97999999999999
 ```
 
-### O problema da truncagem
+#### O problema da truncagem
 Dado o exemplo do valor 0.1 (Float - exemplo 3), nós não chamamos o método `truncate` e ainda sim eu argumentei que o valor foi truncado, bom, de forma consciente ou não, estamos truncando os valores para duas casas decimais. Isso é um fato porque o usuário não vai ver em tela $ 0.100000000000000005551115123126 $, então ainda que não tenha sido de forma direta, houve uma truncagem, mas nesse caso sem introdução de imprecisão.
 
 O grande problema é que a truncagem pode levar a um valor final completamente diferente do valor matematicamente correto. Vou dar um exemplo explorando o pior cenário possível deste caso, aquele que todo programador vai falar "ah! mas eu nunca faria assim" ou "ninguém cometeria um erro tão bobo assim". Bom, essa é uma discussão inútil, o ponto é que se existe a possibilidade de acontecer, vai acontecer.
@@ -155,7 +157,7 @@ Entenda o ponto mais importante: _O problema dos floats não é que eles sempre 
 Q: Então se o float carrega imprecisão e não podemos truncar, o que devemos fazer? \
 R: Não usar Float **para cálculos**. Você ainda pode usar Float para fazer representações de números decimais, mas evite fazer cálculos. Minha opinição sobre isso é que mesmo nesse caso ainda é possível evitar o uso de Float visto que valor monetário tem tipos melhores para representação. A string, como já comentado acima, funciona para representar valores decimais onde não existe necessidade de cálculo, mas um BigDecimal funciona perfeitamente nesse caso também.
 
-## Tipo Inteiro
+### Tipo Inteiro
 Qualquer valor monetário pode ser armazenado como inteiro:
 
 ```
@@ -171,7 +173,7 @@ Para mim é a forma mais segura e flexível de armazenar valores monetários al�
 1. Performance: Cálculos matemáticos com inteiros (CPU) são muito mais rápidos do que com decimais (processados via software).
 2. Espaço: Um `DECIMAL(15,5)` pode ocupar 18 bytes, enquanto o `BIGINT` ocupa sempre 8 bytes, economizando mais de 50% de espaço em disco e memória em grandes volumes de dados.
 
-## Tipo Decimal
+### Tipo Decimal
 
 O Ruby fornece suporte a tipos decimais através da classe `BigDecimal`
 
@@ -250,7 +252,7 @@ a, b = BigDecimal('0.1').coerce(0.1)
 BigDecimal("0.1") + BigDecimal("0.1")
 ```
 
-### Detalhe da implementação em C
+#### Detalhe da implementação em C
 
 Uma pergunta importante que pode surgir: se eu chamo `coerce` para um número Float, ele será convertido com segurança? Ou seja, se 0.1 é impreciso, BigDecimal(0.1) é impreciso?
 
@@ -292,7 +294,7 @@ BigDecimal(3.33333, 10)
 **O Ruby conseguiu tomar a decisão mais correta possível quando se mistura BigDecimal com Float**, caso contrário poderíamos ter resultados catastróficos.
 
 
-### A Mágica do Rails
+#### A Mágica do Rails
 Até aqui tudo que eu mostrei é Ruby puro, então como funciona para o Ruby on Rails?
 Os tipos em memória são definidos pelos tipos especificados na migração, então vamos pegar esse exemplo:
 
@@ -303,7 +305,7 @@ create_table "payments",
     t.decimal "amount", precision: 15, scale: 5
 ```
 
-Gross value será representado como Float, então jamais use esse tipo em migrações para representar valor monetário.
+_Gross value_ será representado como Float, então jamais use esse tipo em migrações para representar valor monetário.
 
 Já o amount será instanciado em Ruby automaticamente como BigDecimal, então no geral você não terá **problemas** se fizer cálculos em memória (pelo menos não com tipagem e imprecisão), **a não ser que por algum motivo (inexplicável)** você decida transformar decimais em float para fazer cálculos.
 
@@ -320,7 +322,7 @@ Outro ponto interessante é que no Rails, graças ao ActiveSupport também temos
 
 Em sistemas financeiros existe uma distinção muito importante entre valor interno de cálculo e valor monetário exibido/liquidado. Isso evita inconsistências contábeis e erros acumulados.
 
-### Dinheiro normalmente tem 2 casas decimais
+### Cálculo interno X valor monetário
 Para BRL (Real), o padrão monetário é 2 casas decimais.
 
 Ou seja:
@@ -344,7 +346,7 @@ value.round(2, :half_up)
 
 ### Política de arredondamento
 
-Exemplo de documentação interna:
+É interessante criar uma documentação interna que defina como será tratado esses casos e em quais situações é adequado tratar. Exemplo de documentação interna:
 
 Precision: 2 decimals \
 Método: round half up \
@@ -364,23 +366,23 @@ Por exemplo:
 
 ### Penny Drift
 
-Dependendo do modelo de arredondamento usado, é possível que você encontre um problema clássico chamado de "Penny Drift" onde a diferença de arredondamento de centavos começa a se acumular ao longo do tempo, gerando divergências contábeis mesmo usando a tipagem correta para valor monetário.
+Dependendo do modelo de arredondamento usado, é possível que você encontre um problema clássico chamado de "Penny Drift" onde a diferença de arredondamento de centavos começa a se acumular ao longo do tempo. Diferente da imprecisão gerada pelo Float, essas divergências contábeis aparecem mesmo com o uso correto dos decimais.
 
-Ele aparece principalmente quando:
+Aparece principalmente quando:
 
 - Existem muitos cálculos com frações
 - Há várias etapas de arredondamento
 - Ou divisão de valores entre várias partes
 
-Como já visto na seção de tipagem Float, mesmo diferenças de R$ 0,01 podem virar valores significativos em escala. Então o modelo onde não há arredondamentos e não há truncagens nas partes intermediárias do cálculo é o ideal nesse caso, estamos falando aqui que algo próximo do modelo B citado na **política de arredondamento** seria o ideal.
+Como já visto na seção de tipagem Float, mesmo diferenças de R$ 0,01 podem virar valores significativos em escala. Então o modelo onde não há arredondamentos e não há truncagens nas partes intermediárias do cálculo é o ideal nesse caso, estamos falando aqui de algo próximo do modelo B citado na **política de arredondamento**.
 
 Outro exemplo comum é na divisão de valores:
 
-Dividir R$ 100,00 entre 3 pessoas da 33,333, mas multiplicando esse valor por 3 temos 99,999, então faltou 1 centavo. Esse centavo precisa ir para alguém, se o sistema sempre der o centavo para a mesma parte, surge drift.
+Dividir R$ 100,00 entre 3 pessoas resulta em 33,333, mas multiplicando esse valor por 3 temos 99,999, então essa divisão "sumiu" com 1 centavo. Esse centavo precisa ir para alguém.
 
 Distribuição justa de centavos:
 
-Ao invés de distribuir o centavo sempre para primeiro da lista (criando assim um sistema injusto), é possível implementar um algoritmo chamado de "Largest Remainder Method" proposto por Alexander Hamilton
+Ao invés de distribuir o centavo sempre para o primeiro da lista (criando assim um sistema injusto), é possível implementar um algoritmo chamado de "O Método dos Maiores Restos" (Largest Remainder Method) proposto por Alexander Hamilton
 
 Pseudocódigo do algoritmo:
 
